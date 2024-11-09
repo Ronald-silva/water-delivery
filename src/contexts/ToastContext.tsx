@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import Toast from '@/components/ui/toast';
 
-type ToastType = 'success' | 'error' | 'warning' | 'info';
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-interface Toast {
+export interface ToastMessage {
   id: number;
   message: string;
   type: ToastType;
@@ -15,7 +16,12 @@ interface ToastContextData {
 const ToastContext = createContext<ToastContextData>({} as ToastContextData);
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [messages, setMessages] = useState<Toast[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [messages, setMessages] = useState<ToastMessage[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const addToast = useCallback((message: string, type: ToastType) => {
     const id = Math.random();
@@ -31,22 +37,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {messages.map(message => (
-          <div
-            key={message.id}
-            className={`p-4 rounded-lg shadow-lg ${
-              message.type === 'success' ? 'bg-green-500' :
-              message.type === 'error' ? 'bg-red-500' :
-              message.type === 'warning' ? 'bg-yellow-500' :
-              'bg-blue-500'
-            } text-white`}
-          >
-            {message.message}
-          </div>
-        ))}
-      </div>
-      {children}
+      {mounted && messages.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {messages.map(message => (
+            <Toast
+              key={message.id}
+              message={message.message}
+              type={message.type}
+            />
+          ))}
+        </div>
+      )}
     </ToastContext.Provider>
   );
 };

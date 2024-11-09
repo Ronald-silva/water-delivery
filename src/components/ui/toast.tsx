@@ -1,52 +1,47 @@
 import React from 'react';
-import { CheckCircle, AlertCircle, X } from 'lucide-react';
-
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
+import { 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle, 
+  Info
+} from 'lucide-react';
+import { ToastType } from '@/contexts/ToastContext';
 
 interface ToastProps {
   message: string;
   type: ToastType;
-  onClose: () => void;
 }
 
-const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
-  const types = {
+const Toast: React.FC<ToastProps> = ({ message, type }) => {
+  const variants = {
     success: {
       icon: CheckCircle,
-      className: 'bg-green-50 text-green-800 border-green-200',
-      iconClass: 'text-green-400'
+      bg: 'bg-green-500',
+      iconColor: 'text-green-200'
     },
     error: {
-      icon: AlertCircle,
-      className: 'bg-red-50 text-red-800 border-red-200',
-      iconClass: 'text-red-400'
+      icon: XCircle,
+      bg: 'bg-red-500',
+      iconColor: 'text-red-200'
     },
     warning: {
-      icon: AlertCircle,
-      className: 'bg-yellow-50 text-yellow-800 border-yellow-200',
-      iconClass: 'text-yellow-400'
+      icon: AlertTriangle,
+      bg: 'bg-yellow-500',
+      iconColor: 'text-yellow-200'
     },
     info: {
-      icon: AlertCircle,
-      className: 'bg-blue-50 text-blue-800 border-blue-200',
-      iconClass: 'text-blue-400'
+      icon: Info,
+      bg: 'bg-blue-500',
+      iconColor: 'text-blue-200'
     }
   };
 
-  const { icon: Icon, className, iconClass } = types[type];
+  const { icon: Icon, bg, iconColor } = variants[type];
 
   return (
-    <div className={`fixed top-4 right-4 w-96 border rounded-lg shadow-lg ${className}`}>
-      <div className="p-4 flex items-center gap-3">
-        <Icon className={`w-5 h-5 ${iconClass}`} />
-        <p className="flex-1">{message}</p>
-        <button 
-          onClick={onClose}
-          className="p-1 hover:bg-black/5 rounded-full"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+    <div className={`${bg} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] animate-slide-in`}>
+      <Icon className={`w-5 h-5 ${iconColor}`} />
+      <p className="text-sm font-medium">{message}</p>
     </div>
   );
 };

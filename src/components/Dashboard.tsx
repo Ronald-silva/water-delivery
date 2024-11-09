@@ -44,18 +44,17 @@ interface DashboardStats {
   weeklyGrowth: string;
   weeklyRevenue: string;
 }
-
 const Dashboard: React.FC = () => {
   // Hooks
   const { addToast } = useToast();
   const { routes, addRoute, updateRoute, reorderDeliveries } = useDeliveryRoutes();
 
   // Estados
+  const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<DashboardView>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentTime, setCurrentTime] = useState<string>('');
-  const [isClient, setIsClient] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
 
   const [orders, setOrders] = useState<Order[]>([
@@ -74,7 +73,7 @@ const Dashboard: React.FC = () => {
 
   // Effects
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
     setCurrentTime(new Date().toISOString());
   }, []);
 
@@ -102,7 +101,6 @@ const Dashboard: React.FC = () => {
     weeklyGrowth: "+12%",
     weeklyRevenue: "8.450"
   };
-
   // Handlers
   const handleNewOrder = (data: OrderFormData) => {
     const newOrder: Order = {
@@ -157,9 +155,8 @@ const Dashboard: React.FC = () => {
     addToast('Logout realizado com sucesso!', 'success');
     // Implementar lógica de logout
   };
-
   // Loading state
-  if (!isClient) {
+  if (!mounted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -199,7 +196,7 @@ const Dashboard: React.FC = () => {
             }`}
           >
             <Home className="w-5 h-5" />
-            Dashboard
+            Painel
           </button>
           <button
             onClick={() => setView('orders')}
@@ -237,7 +234,6 @@ const Dashboard: React.FC = () => {
           </button>
         </nav>
       </div>
-
       {/* Main Content */}
       <div className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-0'} transition-margin duration-200 ease-in-out`}>
         {/* Header */}
@@ -252,7 +248,7 @@ const Dashboard: React.FC = () => {
               </button>
               <div>
                 <h1 className="text-xl font-semibold">
-                  {view === 'dashboard' && 'Dashboard'}
+                  {view === 'dashboard' && 'Painel'}
                   {view === 'orders' && 'Pedidos'}
                   {view === 'routes' && 'Rotas de Entrega'}
                   {view === 'new-order' && 'Novo Pedido'}
@@ -300,11 +296,11 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </header>
-
-        {/* Main Content */}
+        {/* Main Content Area */}
         <div className="p-6">
           {view === 'dashboard' && (
             <>
+              {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard 
                   title="Pedidos Pendentes" 
@@ -334,6 +330,7 @@ const Dashboard: React.FC = () => {
                 />
               </div>
 
+              {/* Performance Cards */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <Card>
                   <div className="p-6">
@@ -369,7 +366,7 @@ const Dashboard: React.FC = () => {
                     <h3 className="text-lg font-semibold mb-4">Resumo Semanal</h3>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                           <Package className="w-4 h-4 text-gray-400" />
                           <span className="text-gray-600">Total de Pedidos</span>
                         </div>
@@ -429,7 +426,7 @@ const Dashboard: React.FC = () => {
               </div>
             </>
           )}
-
+          {/* Orders View */}
           {view === 'orders' && (
             <OrderList 
               orders={orders}
@@ -437,6 +434,7 @@ const Dashboard: React.FC = () => {
             />
           )}
 
+          {/* Routes View */}
           {view === 'routes' && (
             <DeliveryRoutes
               routes={routes}
@@ -445,6 +443,7 @@ const Dashboard: React.FC = () => {
             />
           )}
 
+          {/* New Order View */}
           {view === 'new-order' && (
             <NewOrderForm
               onSubmit={handleNewOrder}
