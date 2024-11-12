@@ -1,3 +1,4 @@
+// src/components/Dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/card';
 import Button from '@/components/ui/button';
@@ -27,7 +28,9 @@ import {
   LogOut,
   Home,
   Menu,
-  X
+  X,
+  Phone,
+  MapPin
 } from 'lucide-react';
 
 type DashboardView = 'dashboard' | 'orders' | 'routes' | 'new-order';
@@ -52,7 +55,7 @@ const Dashboard: React.FC = () => {
   // Estados
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<DashboardView>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentTime, setCurrentTime] = useState<string>('');
   const [notificationCount, setNotificationCount] = useState(0);
@@ -101,6 +104,7 @@ const Dashboard: React.FC = () => {
     weeklyGrowth: "+12%",
     weeklyRevenue: "8.450"
   };
+
   // Handlers
   const handleNewOrder = (data: OrderFormData) => {
     const newOrder: Order = {
@@ -170,82 +174,106 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div 
-        className={`fixed inset-y-0 left-0 w-64 bg-white border-r transform ${
+      <aside 
+        className={`fixed lg:relative lg:flex inset-y-0 left-0 w-64 bg-white border-r shadow-sm transform transition-transform duration-200 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } transition-transform duration-200 ease-in-out z-30`}
+        } lg:translate-x-0 z-30`}
       >
-        <div className="p-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-blue-600">Água Express</h1>
-            <button 
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div className="flex flex-col h-full">
+          {/* Logo e Título */}
+          <div className="p-4 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-blue-600">Água Express</span>
+              </div>
+              <button 
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
+
+          {/* Menu de Navegação */}
+          <nav className="flex-1 p-4">
+            <div className="space-y-1">
+              <button
+                onClick={() => setView('dashboard')}
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                  view === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Home className="w-5 h-5" />
+                Painel
+              </button>
+
+              <button
+                onClick={() => setView('orders')}
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                  view === 'orders' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Package className="w-5 h-5" />
+                Pedidos
+              </button>
+
+              <button
+                onClick={() => setView('routes')}
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                  view === 'routes' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Truck className="w-5 h-5" />
+                Rotas
+              </button>
+            </div>
+
+            <div className="mt-6 pt-6 border-t space-y-1">
+              <button
+                onClick={() => addToast('Em desenvolvimento', 'info')}
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+              >
+                <Settings className="w-5 h-5" />
+                Configurações
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+              >
+                <LogOut className="w-5 h-5" />
+                Sair
+              </button>
+            </div>
+          </nav>
         </div>
+      </aside>
 
-        <nav className="mt-6">
-          <div className="px-4 mb-2 text-xs font-semibold text-gray-500">MENU</div>
-          <button
-            onClick={() => setView('dashboard')}
-            className={`w-full flex items-center gap-3 px-6 py-3 hover:bg-gray-50 ${
-              view === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'text-gray-600'
-            }`}
-          >
-            <Home className="w-5 h-5" />
-            Painel
-          </button>
-          <button
-            onClick={() => setView('orders')}
-            className={`w-full flex items-center gap-3 px-6 py-3 hover:bg-gray-50 ${
-              view === 'orders' ? 'bg-blue-50 text-blue-600' : 'text-gray-600'
-            }`}
-          >
-            <Package className="w-5 h-5" />
-            Pedidos
-          </button>
-          <button
-            onClick={() => setView('routes')}
-            className={`w-full flex items-center gap-3 px-6 py-3 hover:bg-gray-50 ${
-              view === 'routes' ? 'bg-blue-50 text-blue-600' : 'text-gray-600'
-            }`}
-          >
-            <Truck className="w-5 h-5" />
-            Rotas
-          </button>
+      {/* Overlay para mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-          <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-500">SISTEMA</div>
-          <button
-            onClick={() => addToast('Em desenvolvimento', 'info')}
-            className="w-full flex items-center gap-3 px-6 py-3 hover:bg-gray-50 text-gray-600"
-          >
-            <Settings className="w-5 h-5" />
-            Configurações
-          </button>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-6 py-3 hover:bg-gray-50 text-gray-600"
-          >
-            <LogOut className="w-5 h-5" />
-            Sair
-          </button>
-        </nav>
-      </div>
-      {/* Main Content */}
-      <div className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-0'} transition-margin duration-200 ease-in-out`}>
+      {/* Conteúdo Principal */}
+      <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="bg-white border-b sticky top-0 z-20">
-          <div className="flex items-center justify-between px-6 py-4">
+        <header className="bg-white border-b sticky top-0 z-10">
+          <div className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
               >
                 <Menu className="w-5 h-5" />
               </button>
+
               <div>
                 <h1 className="text-xl font-semibold">
                   {view === 'dashboard' && 'Painel'}
@@ -253,33 +281,32 @@ const Dashboard: React.FC = () => {
                   {view === 'routes' && 'Rotas de Entrega'}
                   {view === 'new-order' && 'Novo Pedido'}
                 </h1>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-500 hidden sm:block">
                   {view === 'dashboard' && 'Visão geral do sistema'}
-                  {view === 'orders' && 'Gestão de pedidos'}
-                  {view === 'routes' && 'Organização das entregas'}
-                  {view === 'new-order' && 'Cadastro de novo pedido'}
+                  {view === 'orders' && 'Gerenciar pedidos'}
+                  {view === 'routes' && 'Organizar entregas'}
+                  {view === 'new-order' && 'Cadastrar novo pedido'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              {view !== 'new-order' && (
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Buscar..."
-                    value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-64 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              )}
+            <div className="flex items-center gap-3">
+              {/* Busca - Desktop */}
+              <div className="hidden md:block relative">
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-64 pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              </div>
 
               <button className="relative p-2 hover:bg-gray-100 rounded-full">
                 <Bell className="w-5 h-5 text-gray-600" />
                 {notificationCount > 0 && (
-                  <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                     {notificationCount}
                   </span>
                 )}
@@ -287,21 +314,37 @@ const Dashboard: React.FC = () => {
 
               {view !== 'new-order' && (
                 <Button
-                  icon={Plus}
                   onClick={() => setView('new-order')}
+                  className="hidden sm:flex"
                 >
+                  <Plus className="w-4 h-4 mr-2" />
                   Novo Pedido
                 </Button>
               )}
             </div>
           </div>
+
+          {/* Busca - Mobile */}
+          <div className="p-4 md:hidden">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            </div>
+          </div>
         </header>
-        {/* Main Content Area */}
-        <div className="p-6">
+        {/* Área de Conteúdo com Padding Responsivo */}
+        <div className="p-4 lg:p-6 overflow-auto">
+          {/* Dashboard View */}
           {view === 'dashboard' && (
             <>
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* Stats Cards - Grid Responsivo */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                 <StatCard 
                   title="Pedidos Pendentes" 
                   value={stats.pendingOrders.toString()}
@@ -330,10 +373,11 @@ const Dashboard: React.FC = () => {
                 />
               </div>
 
-              {/* Performance Cards */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Cards de Performance - Layout Responsivo */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+                {/* Desempenho de Hoje */}
                 <Card>
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <h3 className="text-lg font-semibold mb-4">Desempenho de Hoje</h3>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
@@ -361,8 +405,9 @@ const Dashboard: React.FC = () => {
                   </div>
                 </Card>
 
+                {/* Resumo Semanal */}
                 <Card>
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <h3 className="text-lg font-semibold mb-4">Resumo Semanal</h3>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
@@ -377,7 +422,7 @@ const Dashboard: React.FC = () => {
                           <TrendingUp className="w-4 h-4 text-gray-400" />
                           <span className="text-gray-600">Crescimento</span>
                         </div>
-                        <span className="font-semibold text-green-500">{stats.weeklyGrowth}</span>
+                        <span className="font-semibold text-green-600">{stats.weeklyGrowth}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -391,10 +436,10 @@ const Dashboard: React.FC = () => {
                 </Card>
               </div>
 
-              {/* Quick Actions */}
-              <div className="mb-8">
+              {/* Ações Rápidas */}
+              <div className="mt-6">
                 <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <QuickAction
                     icon={Plus}
                     title="Novo Pedido"
@@ -415,18 +460,87 @@ const Dashboard: React.FC = () => {
                   />
                 </div>
               </div>
+              {/* Lista de Pedidos Recentes - Versão Responsiva */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Últimos Pedidos</h3>
+                  <Button
+                    onClick={() => setView('orders')}
+                    variant="ghost"
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    Ver todos
+                  </Button>
+                </div>
 
-              {/* Latest Orders */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Últimos Pedidos</h3>
-                <OrderList 
-                  orders={orders.slice(0, 5)}
-                  onUpdateStatus={handleUpdateStatus}
-                />
+                {/* Versão Mobile - Cards */}
+                <div className="space-y-4 lg:hidden">
+                  {orders.slice(0, 5).map((order) => (
+                    <Card key={order.id}>
+                      <div className="p-4">
+                        {/* Cabeçalho do Card */}
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h4 className="font-medium">{order.customerName}</h4>
+                            <div className="flex flex-col gap-1 mt-1">
+                              <span className="text-sm text-gray-600 flex items-center gap-2">
+                                <Phone className="w-4 h-4" />
+                                {order.phone}
+                              </span>
+                              <span className="text-sm text-gray-600 flex items-center gap-2">
+                                <MapPin className="w-4 h-4" />
+                                {order.address}
+                              </span>
+                            </div>
+                          </div>
+                          <span className={`
+                            px-2 py-1 rounded-full text-xs
+                            ${order.status === 'PENDING' && 'bg-yellow-100 text-yellow-800'}
+                            ${order.status === 'CONFIRMED' && 'bg-blue-100 text-blue-800'}
+                            ${order.status === 'IN_DELIVERY' && 'bg-purple-100 text-purple-800'}
+                            ${order.status === 'DELIVERED' && 'bg-green-100 text-green-800'}
+                            ${order.status === 'CANCELLED' && 'bg-red-100 text-red-800'}
+                          `}>
+                            {order.status === 'PENDING' && 'Pendente'}
+                            {order.status === 'CONFIRMED' && 'Confirmado'}
+                            {order.status === 'IN_DELIVERY' && 'Em Entrega'}
+                            {order.status === 'DELIVERED' && 'Entregue'}
+                            {order.status === 'CANCELLED' && 'Cancelado'}
+                          </span>
+                        </div>
+
+                        {/* Detalhes do Pedido */}
+                        <div className="flex justify-between items-center text-sm pt-3 border-t">
+                          <span className="text-gray-600">
+                            {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Package className="w-4 h-4 text-gray-400" />
+                            <span>{order.items} garrafões</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Versão Desktop - Tabela */}
+                <div className="hidden lg:block">
+                  <div className="overflow-x-auto">
+                    <OrderList 
+                      orders={orders.slice(0, 5)}
+                      onUpdateStatus={handleUpdateStatus}
+                    />
+                  </div>
+                </div>
               </div>
             </>
           )}
-          {/* Orders View */}
+
+          {/* Outras Views */}
           {view === 'orders' && (
             <OrderList 
               orders={orders}
@@ -434,7 +548,6 @@ const Dashboard: React.FC = () => {
             />
           )}
 
-          {/* Routes View */}
           {view === 'routes' && (
             <DeliveryRoutes
               routes={routes}
@@ -443,7 +556,6 @@ const Dashboard: React.FC = () => {
             />
           )}
 
-          {/* New Order View */}
           {view === 'new-order' && (
             <NewOrderForm
               onSubmit={handleNewOrder}
@@ -451,7 +563,19 @@ const Dashboard: React.FC = () => {
             />
           )}
         </div>
-      </div>
+
+        {/* Botão Flutuante Novo Pedido (Mobile) */}
+        {view !== 'new-order' && (
+          <div className="fixed right-4 bottom-4 sm:hidden">
+            <Button
+              onClick={() => setView('new-order')}
+              className="w-12 h-12 rounded-full shadow-lg flex items-center justify-center"
+            >
+              <Plus className="w-6 h-6" />
+            </Button>
+          </div>
+        )}
+      </main>
     </div>
   );
 };
