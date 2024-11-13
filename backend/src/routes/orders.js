@@ -3,6 +3,9 @@ const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
 const auth = require('../middlewares/auth');
+const validate = require('../middlewares/validate');
+
+
 
 // Validações para criação/atualização de pedido
 const validateOrderData = [
