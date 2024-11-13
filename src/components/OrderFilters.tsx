@@ -1,149 +1,188 @@
+// src/components/OrderFilters.tsx
 import React from 'react';
-import { Filter, Search, X } from 'lucide-react';
-import Card from './ui/card';
+import { 
+  Search, 
+  Filter, 
+  Package, 
+  Calendar, 
+  CreditCard,
+  ChevronUp,
+  ChevronDown,
+  X
+} from 'lucide-react';
 import Button from './ui/button';
+import Card from './ui/card';
+import { OrderStatus, PaymentMethod } from '@/types/order';
 
-interface OrderFilters {
+interface OrderFiltersState {
   search: string;
-  status: string;
-  dateRange: 'today' | 'week' | 'month' | 'all';
-  paymentMethod: string;
+  status: OrderStatus | 'all';
+  dateRange: string;
+  paymentMethod: PaymentMethod | 'all';
 }
 
 interface OrderFiltersProps {
-  filters: OrderFilters;
-  onFilterChange: (filters: Partial<OrderFilters>) => void;
-  onClearFilters: () => void;
-  isOpen: boolean;
-  onToggle: () => void;
+  filters: OrderFiltersState;
+  onFilterChange: (newFilters: Partial<OrderFiltersState>) => void;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
 const OrderFilters: React.FC<OrderFiltersProps> = ({
   filters,
   onFilterChange,
-  onClearFilters,
-  isOpen,
+  isOpen = false,
   onToggle
 }) => {
-  const dateRangeOptions = [
-    { value: 'today', label: 'Hoje' },
-    { value: 'week', label: 'Última Semana' },
-    { value: 'month', label: 'Último Mês' },
-    { value: 'all', label: 'Todos' }
-  ];
+  const hasActiveFilters = 
+    filters.status !== 'all' || 
+    filters.dateRange !== 'all' || 
+    filters.paymentMethod !== 'all';
 
   const statusOptions = [
-    { value: 'all', label: 'Todos' },
-    { value: 'PENDING', label: 'Pendentes' },
-    { value: 'CONFIRMED', label: 'Confirmados' },
+    { value: 'PENDING', label: 'Pendente' },
+    { value: 'CONFIRMED', label: 'Confirmado' },
     { value: 'IN_DELIVERY', label: 'Em Entrega' },
-    { value: 'DELIVERED', label: 'Entregues' },
-    { value: 'CANCELLED', label: 'Cancelados' }
+    { value: 'DELIVERED', label: 'Entregue' },
+    { value: 'CANCELLED', label: 'Cancelado' }
   ];
 
   const paymentOptions = [
-    { value: 'all', label: 'Todos' },
     { value: 'money', label: 'Dinheiro' },
     { value: 'card', label: 'Cartão' },
     { value: 'pix', label: 'PIX' }
   ];
 
   return (
-    <div className="mb-6">
-      {/* Barra de Pesquisa */}
-      <div className="flex flex-wrap gap-4 items-center mb-4">
-        <div className="flex-1 min-w-[200px]">
-          <div className="relative">
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => onFilterChange({ search: e.target.value })}
-              placeholder="Buscar por nome, telefone ou endereço..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          </div>
+    <div className="space-y-4">
+      {/* Barra de Pesquisa e Toggle */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Buscar por nome, telefone ou endereço..."
+            value={filters.search}
+            onChange={(e) => onFilterChange({ search: e.target.value })}
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+          <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          {filters.search && (
+            <button
+              onClick={() => onFilterChange({ search: '' })}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
-        
+
         <Button
-          variant="outline"
           onClick={onToggle}
-          className="flex items-center gap-2"
+          variant={hasActiveFilters ? 'primary' : 'outline'}
+          className="sm:w-auto flex items-center gap-2"
         >
           <Filter className="w-4 h-4" />
-          {isOpen ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+          <span>Filtros</span>
+          {hasActiveFilters && (
+            <span className="px-2 py-0.5 bg-white bg-opacity-20 rounded-full text-xs">
+              {Object.entries(filters)
+                .filter(([key, value]) => key !== 'search' && value !== 'all')
+                .length}
+            </span>
+          )}
+          {isOpen ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
         </Button>
-
-        {(filters.status !== 'all' || filters.dateRange !== 'all' || filters.paymentMethod !== 'all' || filters.search) && (
-          <Button
-            variant="outline"
-            onClick={onClearFilters}
-            className="flex items-center gap-2"
-          >
-            <X className="w-4 h-4" />
-            Limpar Filtros
-          </Button>
-        )}
       </div>
 
       {/* Painel de Filtros */}
       {isOpen && (
-        <Card className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Status */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={filters.status}
-                onChange={(e) => onFilterChange({ status: e.target.value })}
-                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {statusOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+        <Card className="border border-gray-200">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium">Filtros</h3>
+              {hasActiveFilters && (
+                <button
+                  onClick={() => onFilterChange({
+                    status: 'all',
+                    dateRange: 'all',
+                    paymentMethod: 'all'
+                  })}
+                  className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  Limpar filtros
+                </button>
+              )}
             </div>
 
-            {/* Período */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Período
-              </label>
-              <select
-                value={filters.dateRange}
-                onChange={(e) => onFilterChange({ 
-                  dateRange: e.target.value as OrderFilters['dateRange'] 
-                })}
-                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {dateRangeOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Status
+                  </div>
+                </label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => onFilterChange({ status: e.target.value as OrderStatus | 'all' })}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="all">Todos</option>
+                  {statusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Forma de Pagamento */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Forma de Pagamento
-              </label>
-              <select
-                value={filters.paymentMethod}
-                onChange={(e) => onFilterChange({ paymentMethod: e.target.value })}
-                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {paymentOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              {/* Período */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Período
+                  </div>
+                </label>
+                <select
+                  value={filters.dateRange}
+                  onChange={(e) => onFilterChange({ dateRange: e.target.value })}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="all">Todo período</option>
+                  <option value="today">Hoje</option>
+                  <option value="week">Últimos 7 dias</option>
+                  <option value="month">Último mês</option>
+                </select>
+              </div>
+
+              {/* Forma de Pagamento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Pagamento
+                  </div>
+                </label>
+                <select
+                  value={filters.paymentMethod}
+                  onChange={(e) => onFilterChange({ paymentMethod: e.target.value as PaymentMethod | 'all' })}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="all">Todas as formas</option>
+                  {paymentOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </Card>

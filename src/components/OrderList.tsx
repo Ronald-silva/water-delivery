@@ -1,3 +1,4 @@
+// src/components/OrderList.tsx
 import React, { useState } from 'react';
 import { 
   Package, 
@@ -20,34 +21,18 @@ import PrintOrder from './PrintOrder';
 import OrderDetails from './OrderDetails';
 import { useModal } from '@/hooks/useModal';
 import { usePrint } from '@/hooks/usePrint';
-
-// Types
-type OrderStatus = 'PENDING' | 'CONFIRMED' | 'IN_DELIVERY' | 'DELIVERED' | 'CANCELLED';
-type PaymentMethod = 'money' | 'card' | 'pix';
-
-interface Order {
-  id: string;
-  customerName: string;
-  phone: string;
-  address: string;
-  items: number;
-  status: OrderStatus;
-  paymentMethod: PaymentMethod;
-  createdAt: string;
-  total: number;
-  notes?: string;
-}
-
-interface OrderFiltersState {
-  search: string;
-  status: string;
-  dateRange: 'today' | 'week' | 'month' | 'all';
-  paymentMethod: string;
-}
+import { Order, OrderStatus, PaymentMethod } from '@/types/order';
 
 interface OrderListProps {
   orders: Order[];
   onUpdateStatus: (orderId: string, newStatus: OrderStatus) => void;
+}
+
+interface OrderFiltersState {
+  search: string;
+  status: OrderStatus | 'all';
+  dateRange: string;
+  paymentMethod: PaymentMethod | 'all';
 }
 
 const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus }) => {
@@ -60,47 +45,32 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus }) => {
   // Estados
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filters, setFilters] = useState<OrderFiltersState>({
     search: '',
     status: 'all',
     dateRange: 'all',
     paymentMethod: 'all'
   });
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
-  // Funções auxiliares
-  const formatDate = (date: string) => {
-    if (!date) return '';
-    try {
-      return new Date(date).toLocaleTimeString();
-    } catch {
-      return '';
-    }
-  };
-
-  const getPaymentMethodText = (method: PaymentMethod) => {
-    const methods = {
-      money: 'Dinheiro',
-      card: 'Cartão',
-      pix: 'PIX'
-    };
-    return methods[method];
-  };
 
   // Handlers
+  const handleFilterChange = (newFilters: Partial<OrderFiltersState>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
   const handleCancelOrder = (orderId: string) => {
     setSelectedOrderId(orderId);
     cancelModal.openModal();
   };
 
-  const handleConfirmDelivery = (orderId: string) => {
-    setSelectedOrderId(orderId);
-    deliveryModal.openModal();
-  };
-
   const handleStartDelivery = (orderId: string) => {
     setSelectedOrderId(orderId);
     confirmModal.openModal();
+  };
+
+  const handleConfirmDelivery = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    deliveryModal.openModal();
   };
 
   const handlePrint = (order: Order, type: 'order' | 'receipt') => {
@@ -116,9 +86,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus }) => {
       order.address.toLowerCase().includes(searchTerm);
 
     const matchesStatus = filters.status === 'all' || order.status === filters.status;
-
-    const matchesPayment = filters.paymentMethod === 'all' || 
-      order.paymentMethod === filters.paymentMethod;
+    const matchesPayment = filters.paymentMethod === 'all' || order.paymentMethod === filters.paymentMethod;
 
     const orderDate = new Date(order.createdAt);
     const today = new Date();
@@ -145,37 +113,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus }) => {
     return matchesSearch && matchesStatus && matchesPayment && matchesDate;
   });
 
-  // Componente de Status Badge
-  const StatusBadge = ({ status }: { status: OrderStatus }) => {
-    const statusConfig = {
-      PENDING: { color: 'bg-yellow-100 text-yellow-800', text: 'Pendente' },
-      CONFIRMED: { color: 'bg-blue-100 text-blue-800', text: 'Confirmado' },
-      IN_DELIVERY: { color: 'bg-purple-100 text-purple-800', text: 'Em Entrega' },
-      DELIVERED: { color: 'bg-green-100 text-green-800', text: 'Entregue' },
-      CANCELLED: { color: 'bg-red-100 text-red-800', text: 'Cancelado' }
-    };
-
-    const config = statusConfig[status];
-    return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
-        {config.text}
-      </span>
-    );
-  };
-
   // Estado vazio
-  if (!filteredOrders.length) {
+  if (filteredOrders.length === 0) {
     return (
       <>
         <OrderFilters
           filters={filters}
-          onFilterChange={(newFilters) => setFilters(prev => ({ ...prev, ...newFilters }))}
-          onClearFilters={() => setFilters({
-            search: '',
-            status: 'all',
-            dateRange: 'all',
-            paymentMethod: 'all'
-          })}
+          onFilterChange={handleFilterChange}
           isOpen={filterPanelOpen}
           onToggle={() => setFilterPanelOpen(prev => !prev)}
         />
@@ -206,142 +150,122 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus }) => {
 
   return (
     <>
-      {/* Filtros */}
       <OrderFilters
         filters={filters}
-        onFilterChange={(newFilters) => setFilters(prev => ({ ...prev, ...newFilters }))}
-        onClearFilters={() => setFilters({
-          search: '',
-          status: 'all',
-          dateRange: 'all',
-          paymentMethod: 'all'
-        })}
+        onFilterChange={handleFilterChange}
         isOpen={filterPanelOpen}
         onToggle={() => setFilterPanelOpen(prev => !prev)}
       />
 
-      {/* Lista de Pedidos */}
       <Card>
         <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Pedidos</h2>
-            <span className="text-sm text-gray-500">
-              {filteredOrders.length} {filteredOrders.length === 1 ? 'pedido' : 'pedidos'}
-            </span>
-          </div>
-
+          {/* Lista de Pedidos */}
           <div className="space-y-4">
             {filteredOrders.map((order) => (
-              <Card key={order.id} className="hover:bg-gray-50 transition-colors">
+              <Card key={order.id} className="hover:bg-gray-50">
                 <div className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                      <h3 className="font-medium">{order.customerName}</h3>
-                      <div className="flex items-center gap-2 text-gray-600 mt-1">
-                        <Phone className="w-4 h-4" />
-                        <span>{order.phone}</span>
-                      </div>
-                    </div>
-
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                    {/* Informações do Cliente */}
                     <div className="md:col-span-2">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <MapPin className="w-4 h-4" />
-                        <span>{order.address}</span>
+                      <h3 className="font-medium">{order.customerName}</h3>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Phone className="w-4 h-4" />
+                          {order.phone}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin className="w-4 h-4" />
+                          {order.address}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col md:items-end gap-2">
-                      <StatusBadge status={order.status} />
-                      {order.createdAt && (
-                        <span className="text-gray-600">
-                          {formatDate(order.createdAt)}
-                        </span>
+                    {/* Status */}
+                    <div>
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm
+                        ${order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : ''}
+                        ${order.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-800' : ''}
+                        ${order.status === 'IN_DELIVERY' ? 'bg-purple-100 text-purple-800' : ''}
+                        ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' : ''}
+                        ${order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : ''}
+                      `}>
+                        {order.status === 'PENDING' && 'Pendente'}
+                        {order.status === 'CONFIRMED' && 'Confirmado'}
+                        {order.status === 'IN_DELIVERY' && 'Em Entrega'}
+                        {order.status === 'DELIVERED' && 'Entregue'}
+                        {order.status === 'CANCELLED' && 'Cancelado'}
+                      </span>
+                    </div>
+
+                    {/* Ações */}
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedOrder(order)}
+                      >
+                        <Eye className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Detalhes</span>
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePrint(order, 'order')}
+                      >
+                        <Printer className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Imprimir</span>
+                      </Button>
+
+                      {order.status === 'PENDING' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCancelOrder(order.id)}
+                          >
+                            <X className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Cancelar</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => onUpdateStatus(order.id, 'CONFIRMED')}
+                          >
+                            <Check className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Confirmar</span>
+                          </Button>
+                        </>
                       )}
-                    </div>
 
-                    <div className="md:col-span-4 pt-4 mt-2 border-t">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-6">
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Package className="w-4 h-4" />
-                            <span>{order.items} garrafões</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <DollarSign className="w-4 h-4" />
-                            <span>R$ {order.total.toFixed(2)}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Clock className="w-4 h-4" />
-                            <span>{getPaymentMethodText(order.paymentMethod)}</span>
-                          </div>
-                        </div>
+                      {order.status === 'CONFIRMED' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleStartDelivery(order.id)}
+                        >
+                          <Truck className="w-4 h-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Iniciar Entrega</span>
+                        </Button>
+                      )}
 
-                        <div className="flex flex-wrap gap-2">
+                      {order.status === 'IN_DELIVERY' && (
+                        <>
                           <Button
                             size="sm"
                             variant="outline"
-                            icon={Eye}
-                            onClick={() => setSelectedOrder(order)}
+                            onClick={() => handlePrint(order, 'receipt')}
                           >
-                            Detalhes
+                            <Printer className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Comprovante</span>
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
-                            icon={Printer}
-                            onClick={() => handlePrint(order, 'order')}
+                            onClick={() => handleConfirmDelivery(order.id)}
                           >
-                            Imprimir
+                            <Check className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Confirmar Entrega</span>
                           </Button>
-                          {order.status === 'PENDING' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                icon={X}
-                                onClick={() => handleCancelOrder(order.id)}
-                              >
-                                Cancelar
-                              </Button>
-                              <Button
-                                size="sm"
-                                icon={Check}
-                                onClick={() => onUpdateStatus(order.id, 'CONFIRMED')}
-                              >
-                                Confirmar
-                              </Button>
-                            </>
-                          )}
-                          {order.status === 'CONFIRMED' && (
-                            <Button
-                              size="sm"
-                              icon={Truck}
-                              onClick={() => handleStartDelivery(order.id)}
-                            >
-                              Iniciar Entrega
-                            </Button>
-                          )}
-                          {order.status === 'IN_DELIVERY' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                icon={Printer}
-                                onClick={() => handlePrint(order, 'receipt')}
-                              >
-                                Comprovante
-                              </Button>
-                              <Button
-                                size="sm"
-                                icon={Check}
-                                onClick={() => handleConfirmDelivery(order.id)}
-                              >
-                                Confirmar Entrega
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -351,7 +275,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus }) => {
         </div>
       </Card>
 
-      {/* Modais de Confirmação */}
+      {/* Modais */}
       <Modal
         isOpen={cancelModal.isOpen}
         onClose={cancelModal.closeModal}
